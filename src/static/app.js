@@ -472,6 +472,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Helper function to escape HTML to prevent XSS
+  function escapeHtml(text) {
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, (m) => map[m]);
+  }
+
   // Function to render a single activity card
   function renderActivityCard(name, details) {
     const activityCard = document.createElement("div");
@@ -554,9 +566,9 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       <div class="social-share-container">
         <span class="social-share-label">Share:</span>
-        <button class="share-button facebook" data-activity="${name}" data-description="${details.description.replace(/"/g, '&quot;')}" data-schedule="${formattedSchedule.replace(/"/g, '&quot;')}" data-platform="facebook">📘 Facebook</button>
-        <button class="share-button twitter" data-activity="${name}" data-description="${details.description.replace(/"/g, '&quot;')}" data-schedule="${formattedSchedule.replace(/"/g, '&quot;')}" data-platform="twitter">🐦 Twitter</button>
-        <button class="share-button email" data-activity="${name}" data-description="${details.description.replace(/"/g, '&quot;')}" data-schedule="${formattedSchedule.replace(/"/g, '&quot;')}" data-platform="email">✉️ Email</button>
+        <button class="share-button facebook" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" data-platform="facebook" aria-label="Share ${escapeHtml(name)} on Facebook">📘 Facebook</button>
+        <button class="share-button twitter" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" data-platform="twitter" aria-label="Share ${escapeHtml(name)} on Twitter">🐦 Twitter</button>
+        <button class="share-button email" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" data-platform="email" aria-label="Share ${escapeHtml(name)} via Email">✉️ Email</button>
       </div>
       <div class="activity-card-actions">
         ${
@@ -775,20 +787,28 @@ document.addEventListener("DOMContentLoaded", () => {
     // Create share text
     const shareText = `Check out ${activityName} at Mergington High School! ${description}`;
     const shareUrl = window.location.href;
-    const fullShareText = `${shareText}\nSchedule: ${schedule}\n${shareUrl}`;
+
+    // Capitalize platform name for display
+    const platformName = platform.charAt(0).toUpperCase() + platform.slice(1);
 
     switch (platform) {
       case 'facebook':
         // Facebook share URL
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
-        window.open(facebookUrl, '_blank', 'width=600,height=400');
+        const fbWindow = window.open(facebookUrl, '_blank', 'width=600,height=400');
+        if (!fbWindow || fbWindow.closed || typeof fbWindow.closed === 'undefined') {
+          showMessage('Please allow popups to share on Facebook', 'error');
+        }
         break;
 
       case 'twitter':
         // Twitter share URL
         const twitterText = `${shareText}\nSchedule: ${schedule}`;
         const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}&url=${encodeURIComponent(shareUrl)}`;
-        window.open(twitterUrl, '_blank', 'width=600,height=400');
+        const twitterWindow = window.open(twitterUrl, '_blank', 'width=600,height=400');
+        if (!twitterWindow || twitterWindow.closed || typeof twitterWindow.closed === 'undefined') {
+          showMessage('Please allow popups to share on Twitter', 'error');
+        }
         break;
 
       case 'email':
@@ -799,9 +819,6 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = emailUrl;
         break;
     }
-
-    // Show success message
-    showMessage(`Sharing ${activityName} on ${platform}`, 'info');
   }
 
   // Handle unregistration with confirmation
