@@ -472,6 +472,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Helper function to escape HTML to prevent XSS
+  function escapeHtml(text) {
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, (m) => map[m]);
+  }
+
   // Function to render a single activity card
   function renderActivityCard(name, details) {
     const activityCard = document.createElement("div");
@@ -552,6 +564,12 @@ document.addEventListener("DOMContentLoaded", () => {
             .join("")}
         </ul>
       </div>
+      <div class="social-share-container">
+        <span class="social-share-label">Share:</span>
+        <button class="share-button facebook" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" data-platform="facebook" aria-label="Share ${escapeHtml(name)} on Facebook">📘 Facebook</button>
+        <button class="share-button twitter" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" data-platform="twitter" aria-label="Share ${escapeHtml(name)} on Twitter">🐦 Twitter</button>
+        <button class="share-button email" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" data-platform="email" aria-label="Share ${escapeHtml(name)} via Email">✉️ Email</button>
+      </div>
       <div class="activity-card-actions">
         ${
           currentUser
@@ -575,6 +593,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const deleteButtons = activityCard.querySelectorAll(".delete-participant");
     deleteButtons.forEach((button) => {
       button.addEventListener("click", handleUnregister);
+    });
+
+    // Add click handlers for share buttons
+    const shareButtons = activityCard.querySelectorAll(".share-button");
+    shareButtons.forEach((button) => {
+      button.addEventListener("click", handleShare);
     });
 
     // Add click handler for register button (only when authenticated)
@@ -750,6 +774,51 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 300);
       }
     });
+  }
+
+  // Handle social sharing
+  function handleShare(event) {
+    const button = event.currentTarget;
+    const activityName = button.dataset.activity;
+    const description = button.dataset.description;
+    const schedule = button.dataset.schedule;
+    const platform = button.dataset.platform;
+
+    // Create share text
+    const shareText = `Check out ${activityName} at Mergington High School! ${description}`;
+    const shareUrl = window.location.href;
+
+    // Capitalize platform name for display
+    const platformName = platform.charAt(0).toUpperCase() + platform.slice(1);
+
+    switch (platform) {
+      case 'facebook':
+        // Facebook share URL
+        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
+        const fbWindow = window.open(facebookUrl, '_blank', 'width=600,height=400');
+        if (!fbWindow || fbWindow.closed || typeof fbWindow.closed === 'undefined') {
+          showMessage('Please allow popups to share on Facebook', 'error');
+        }
+        break;
+
+      case 'twitter':
+        // Twitter share URL
+        const twitterText = `${shareText}\nSchedule: ${schedule}`;
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}&url=${encodeURIComponent(shareUrl)}`;
+        const twitterWindow = window.open(twitterUrl, '_blank', 'width=600,height=400');
+        if (!twitterWindow || twitterWindow.closed || typeof twitterWindow.closed === 'undefined') {
+          showMessage('Please allow popups to share on Twitter', 'error');
+        }
+        break;
+
+      case 'email':
+        // Email share
+        const subject = `Join ${activityName} at Mergington High School`;
+        const body = `Hi,\n\nI wanted to share this exciting extracurricular activity with you:\n\n${activityName}\n${description}\n\nSchedule: ${schedule}\n\nLearn more: ${shareUrl}\n\nBest regards`;
+        const emailUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.location.href = emailUrl;
+        break;
+    }
   }
 
   // Handle unregistration with confirmation
