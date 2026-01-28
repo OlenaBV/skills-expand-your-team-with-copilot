@@ -30,17 +30,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Dark mode functionality
   function initializeDarkMode() {
+    // Check if dark mode toggle exists
+    if (!darkModeToggle) {
+      return;
+    }
+
     // Check for saved dark mode preference, default to light mode
     const savedDarkMode = localStorage.getItem("darkMode");
     if (savedDarkMode === "enabled") {
       document.body.classList.add("dark-mode");
       updateDarkModeIcon(true);
+    } else {
+      updateDarkModeIcon(false);
     }
   }
 
   function updateDarkModeIcon(isDarkMode) {
     const modeIcon = darkModeToggle.querySelector(".mode-icon");
     modeIcon.textContent = isDarkMode ? "☀️" : "🌙";
+    
+    // Update aria-label for better accessibility
+    darkModeToggle.setAttribute(
+      "aria-label",
+      isDarkMode ? "Switch to light mode" : "Switch to dark mode"
+    );
   }
 
   function toggleDarkMode() {
@@ -51,12 +64,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isDarkMode) {
       localStorage.setItem("darkMode", "enabled");
     } else {
-      localStorage.setItem("darkMode", "disabled");
+      localStorage.removeItem("darkMode");
     }
   }
 
   // Event listener for dark mode toggle
-  darkModeToggle.addEventListener("click", toggleDarkMode);
+  if (darkModeToggle) {
+    darkModeToggle.addEventListener("click", toggleDarkMode);
+  }
 
   // Activity categories with corresponding colors
   const activityTypes = {

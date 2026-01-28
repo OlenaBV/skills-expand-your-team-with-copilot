@@ -57,13 +57,13 @@ body.dark-mode {
 
   /* Feedback colors - adjusted for dark mode */
   --success: #66bb6a;
-  --success-light: #1b5e20;
+  --success-light: #2d4a2d;
   --warning: #ffa726;
-  --warning-light: #e65100;
+  --warning-light: #4a3d2d;
   --error: #ef5350;
-  --error-light: #b71c1c;
+  --error-light: #4a2d2d;
   --info: #29b6f6;
-  --info-light: #01579b;
+  --info-light: #2d3d4a;
 }
 
 * {
